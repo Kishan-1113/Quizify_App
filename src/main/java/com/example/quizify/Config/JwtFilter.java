@@ -40,6 +40,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 token = authHeader.substring(7);
                 username = jwtService.extractUsername(token);
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            logger.warn("JWT token expired: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"JWT token expired\", \"message\": \"" + e.getMessage() + "\"}");
+            return;
         } catch (Exception e) {
             logger.warn("JWT token validation or extraction failed: " + e.getMessage());
         }

@@ -40,6 +40,7 @@ public class UserService {
     public void registerUser(ModelUser user) {
         if (user != null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setRole("USER"); // Force USER role during registration
             userRepo.save(user);
         } else
             throw new ResourceNotFoundException("User can't be empty !");

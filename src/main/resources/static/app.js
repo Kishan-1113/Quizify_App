@@ -115,8 +115,9 @@ function showScreen(screenKey) {
         stopQuizTimer();
     }
 
-    // Redirect to login if user is not authenticated
-    if (!authState.token) {
+    // Redirect to login if user is not authenticated or token is expired
+    if (!authState.token || isTokenExpired(authState.token)) {
+        checkAuth();
         screenKey = 'auth';
     } else if (screenKey === 'auth') {
         // If already logged in, redirect away from auth page to home
@@ -1007,7 +1008,7 @@ function initAuth() {
         const name = document.getElementById('register-name').value.trim();
         const email = document.getElementById('register-email').value.trim();
         const password = document.getElementById('register-password').value;
-        const role = document.getElementById('register-role').value;
+        const role = "USER";
 
         const registerBtn = document.getElementById('register-submit-btn');
         registerBtn.disabled = true;
@@ -1070,8 +1071,43 @@ function handleLogout(message = "Logged out successfully") {
     }
 }
 
+function isTokenExpired(token) {
+    if (!token) return true;
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return true;
+        
+        let base64Url = parts[1];
+        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) {
+            base64 += '=';
+        }
+        
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        const payload = JSON.parse(jsonPayload);
+        if (payload.exp) {
+            const now = Math.floor(Date.now() / 1000);
+            return payload.exp < now;
+        }
+        return false;
+    } catch (e) {
+        console.error("Error checking token expiration:", e);
+        return true;
+    }
+}
+
 function checkAuth() {
-    if (!authState.token) {
+    const hasTokenInStorage = !!localStorage.getItem('quizify_token');
+    if (!authState.token || isTokenExpired(authState.token)) {
+        const wasLoggedIn = hasTokenInStorage;
+        authState.token = null;
+        authState.user = null;
+        localStorage.removeItem('quizify_token');
+        localStorage.removeItem('quizify_user');
+
         // Logged out: hide navigation links and show auth screen
         document.getElementById('nav-home-btn').style.display = 'none';
         document.getElementById('nav-admin-btn').style.display = 'none';
@@ -1082,6 +1118,10 @@ function checkAuth() {
             if (screen) screen.classList.remove('active');
         });
         if (screens.auth) screens.auth.classList.add('active');
+        
+        if (wasLoggedIn) {
+            showToast("Session expired. Please login again.", "info");
+        }
         return false;
     } else {
         // Logged in: show home and user chips
@@ -1110,7 +1150,7 @@ async function authFetch(url, options = {}) {
     try {
         const response = await fetch(url, options);
         
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             handleLogout("Session expired. Please login again.");
             throw new Error("Session expired. Please login again.");
         }
