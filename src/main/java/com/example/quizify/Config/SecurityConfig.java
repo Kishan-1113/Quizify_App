@@ -25,6 +25,9 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.util.List;
 
 @Configuration
@@ -46,7 +49,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Permit public static UI resources and auth endpoints
-                        .requestMatchers("/", "/index.html", "/style.css", "/app.js", "/users/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/style.css", "/app.js", "/users/**", "/error").permitAll()
                         // Strictly restrict question creation (POST requests to /questions/**) to ADMIN
                         // role
                         .requestMatchers(HttpMethod.POST, "/questions/**").hasRole("ADMIN")
@@ -65,9 +68,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(List.of(
+                "https://quizifyfrontend-mukmm993c-projects-kishan.vercel.app",
+                "https://quizifyfrontend-projects-kishan.vercel.app",
+                "http://localhost:8083",
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://*.vercel.app",
+                "http://localhost:*",
+                "http://127.0.0.1:*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "Accept", "Origin"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
