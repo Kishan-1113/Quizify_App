@@ -73,6 +73,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*"));
 
         configuration.setAllowedOrigins(List.of(
+                "http://127.0.0.1:5500",
                 "https://quizifyfrontend-rc5u.onrender.com",
                 "https://quizifyfrontend-sooty.vercel.app"));
 
