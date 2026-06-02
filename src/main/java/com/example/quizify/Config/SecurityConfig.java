@@ -73,6 +73,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*"));
 
         configuration.setAllowedOrigins(List.of(
+                "https://quizifyfrontend-rc5u.onrender.com",
                 "https://quizifyfrontend-sooty.vercel.app"));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
