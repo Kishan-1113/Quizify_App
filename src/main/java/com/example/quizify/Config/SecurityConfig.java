@@ -1,12 +1,13 @@
 package com.example.quizify.Config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -45,7 +46,7 @@ public class SecurityConfig {
             throws Exception {
 
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Permit pre-flight OPTIONS requests
@@ -68,24 +69,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://127.0.0.1:5500",
-                "https://quizify-frontend-chi.vercel.app",
-                "https://quizifyfrontend-rc5u.onrender.com",
-                "https://quizifyfrontend-sooty.vercel.app"));
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.frontendurls}") String corsUrls) {
 
-        configuration.setAllowedOrigins(List.of(
-                "http://127.0.0.1:5500",
-                "https://quizify-frontend-chi.vercel.app",
-                "https://quizifyfrontend-rc5u.onrender.com",
-                "https://quizifyfrontend-sooty.vercel.app"));
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        String[] urls = corsUrls.trim().split(",");
+
+        configuration.setAllowedOrigins(List.of(urls));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "Accept", "Origin"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedHeaders(List.of("*"));
+
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
