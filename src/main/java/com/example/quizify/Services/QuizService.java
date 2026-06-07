@@ -115,10 +115,12 @@ public class QuizService {
 
         // 3. Perform Access Control check
         if ("PRIVATE".equalsIgnoreCase(quiz.getVisibility())) {
-            boolean isCreator = quiz.getCreator() != null && quiz.getCreator().getEmail().equalsIgnoreCase(userEmail);
             boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
-            if (!isCreator && !isAdmin) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: This quiz is private!");
+            if (!isAdmin) {
+                boolean isCreator = quiz.getCreator() != null && quiz.getCreator().getEmail().equalsIgnoreCase(userEmail);
+                if (!isCreator) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: This quiz is private!");
+                }
             }
         }
 

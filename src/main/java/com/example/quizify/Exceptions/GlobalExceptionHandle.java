@@ -1,7 +1,8 @@
 package com.example.quizify.Exceptions;
 
-import java.nio.file.AccessDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,15 @@ public class GlobalExceptionHandle {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body("Email already exists, try a new one !");
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<String> handleDatabaseError(
+            DataAccessException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Database operation failed, can't save !");
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
