@@ -17,5 +17,6 @@ public class QuestionWrapper {
     private String option2;
     private String option3;
     private String option4;
+    private String difficulty;
 
 }

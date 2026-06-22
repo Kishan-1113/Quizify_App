@@ -119,7 +119,7 @@ public class QuizService {
             if (!isAdmin) {
                 boolean isCreator = quiz.getCreator() != null && quiz.getCreator().getEmail().equalsIgnoreCase(userEmail);
                 if (!isCreator) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: This quiz is private!");
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized, this quiz is private!");
                 }
             }
         }
@@ -154,7 +154,8 @@ public class QuizService {
                     options.get(0),
                     options.get(1),
                     options.get(2),
-                    options.get(3));
+                    options.get(3),
+                    q.getDifficulty());
             questionsForUser.add(qw);
         }
 
@@ -201,6 +202,47 @@ public class QuizService {
 
         double percentage = questions.isEmpty() ? 0.0 : ((double) score / questions.size()) * 100;
 
+        // Calculate rating based on difficulty formula
+        int easyCount = 0;
+        int medCount = 0;
+        int hardCount = 0;
+        for (QuestionSet q : questions) {
+            String qDiff = q.getDifficulty();
+            if (qDiff == null) {
+                medCount++;
+            } else {
+                switch (qDiff.toLowerCase()) {
+                    case "easy":
+                        easyCount++;
+                        break;
+                    case "hard":
+                        hardCount++;
+                        break;
+                    case "medium":
+                    default:
+                        medCount++;
+                        break;
+                }
+            }
+        }
+
+        double difScore = (easyCount * 1.0) + (medCount * 1.5) + (hardCount * 2.5);
+        double accuracy = questions.isEmpty() ? 0.0 : (double) score / questions.size();
+        double attemptRating = difScore * (accuracy * accuracy);
+
+        double finalRating = attemptRating;
+        if (quiz.getDifficulty() == null || quiz.getDifficulty().trim().isEmpty() || "Any".equalsIgnoreCase(quiz.getDifficulty())) {
+            List<UserPerformance> prevPerformances = userPerformanceRepo.findByUserOrderByTimestampDesc(user);
+            double oldRating = 0.0;
+            if (prevPerformances != null && !prevPerformances.isEmpty()) {
+                oldRating = prevPerformances.get(0).getRating();
+            }
+            finalRating = 0.9 * oldRating + 0.1 * attemptRating;
+        }
+
+        // Round to 2 decimal places
+        finalRating = Math.round(finalRating * 100.0) / 100.0;
+
         UserPerformance performance = new UserPerformance();
         performance.setUser(user);
         performance.setQuizTitle(quiz.getTitle());
@@ -209,6 +251,7 @@ public class QuizService {
         performance.setScore(score);
         performance.setTotalQuestions(questions.size());
         performance.setPercentage(Math.round(percentage * 10.0) / 10.0); // round to 1 decimal place
+        performance.setRating(finalRating);
 
         userPerformanceRepo.save(performance);
 

@@ -42,6 +42,9 @@ public class UserPerformance {
     private double percentage;
 
     @Column(nullable = false)
+    private double rating = 0.0;
+
+    @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
 
 }
